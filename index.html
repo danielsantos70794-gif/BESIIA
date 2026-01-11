@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BESI IA | Pro Quant Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1; --secondary: #a855f7; --bg: #03040b;
+            --card: rgba(255, 255, 255, 0.04); --border: rgba(255, 255, 255, 0.08);
+            --text: #f8fafc; --success: #10b981; --danger: #f43f5e; --gold: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+
+        .orb { position: fixed; width: 60vw; height: 60vw; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.1; animation: move 20s infinite alternate; }
+        .orb-1 { background: var(--primary); top: -10%; left: -10%; }
+        .orb-2 { background: var(--secondary); bottom: -10%; right: -10%; }
+        @keyframes move { from { transform: translate(0,0); } to { transform: translate(30px, 30px); } }
+
+        #loader { 
+            position: fixed; inset: 0; 
+            background: radial-gradient(circle at center, #0f172a 0%, #03040b 100%); 
+            z-index: 10000; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; gap: 25px; 
+        }
+
+        #loader h1 {
+            font-size: clamp(3.5rem, 12vw, 5.5rem); font-weight: 800; letter-spacing: -3px;
+            background: linear-gradient(to right, #6366f1, #a855f7, #6366f1);
+            background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite, float 4s ease-in-out infinite;
+        }
+
+        .btn-enter { 
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: white; border: none; padding: 20px 50px; border-radius: 100px; 
+            font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            animation: pulse-glow 2s infinite; transition: 0.3s;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        header { padding: 12px 5%; display: none; justify-content: space-between; align-items: center; backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; background: rgba(3, 4, 11, 0.8); }
+        .logo span { background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px 5%; display: none; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .plan-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; position: relative; overflow: hidden; }
+        .plan-badge { position: absolute; top: 15px; right: -30px; background: var(--gold); color: black; font-size: 0.6rem; font-weight: 900; padding: 5px 40px; transform: rotate(45deg); }
+        .plan-list { list-style: none; margin: 15px 0; font-size: 0.8rem; color: #a1a1aa; line-height: 1.6; }
+
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; position: relative; }
+        .btn-main { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 14px 32px; border-radius: 100px; font-weight: 800; cursor: pointer; width: 100%; }
+        
+        .btn-outline { 
+            background: transparent; 
+            border: 1px solid var(--border); 
+            color: var(--text); 
+            padding: 6px 12px;
+            border-radius: 50px; 
+            font-size: 0.65rem; 
+            font-weight: 600;
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+        
+        .search-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 12px 20px; border-radius: 50px; outline: none; }
+        
+        .asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .asset-card { padding: 15px; cursor: pointer; border-radius: 20px; border: 1px solid var(--border); transition: 0.3s; position: relative; }
+        .asset-card.active { border-color: var(--primary); background: rgba(99, 102, 241, 0.1); }
+        .remove-btn { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 10px; cursor: pointer; z-index: 10; }
+        
+        .academy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .info-pill { background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 12px; margin-bottom: 10px; font-size: 0.85rem; border-left: 3px solid var(--primary); }
+        .strategy-box { background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 15px; border: 1px solid var(--success); }
+        
+        .log-box { height: 180px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #a1a1aa; padding: 10px; border-top: 1px solid var(--border); }
+        .disclaimer { font-size: 0.6rem; opacity: 0.3; text-align: center; margin-top: 40px; }
+    </style>
+</head>
+<body>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div id="loader">
+        <h1>BESI <span>IA</span></h1>
+        <button class="btn-enter" onclick="this.parentElement.style.display='none'; document.getElementById('nav-bar').style.display='flex'; document.getElementById('main-app').style.display='block';">ACESSAR TERMINAL</button>
+        <p style="color: #475569; font-size: 0.65rem; letter-spacing: 4px; font-weight: 800; text-transform: uppercase;">Quantum Intel Engine</p>
+    </div>
+
+    <header id="nav-bar">
+        <div class="logo" style="font-weight: 800;">BESI<span>IA</span></div>
+        <div style="display:flex; gap:8px;">
+            <button id="btn-back-plans" class="btn-outline" style="display:none; border-color: var(--primary);" onclick="backToPlans()">TROCAR PLANO</button>
+            <button id="nav-academy" class="btn-outline" style="display:none; border-color: var(--gold); color: var(--gold);" onclick="showAcademy()">ACADEMY</button>
+            <button class="btn-outline" onclick="location.reload()">SAIR</button>
+        </div>
+    </header>
+
+    <main class="container" id="main-app">
+        
+        <div id="section-plans">
+            <h2 style="text-align: center; margin-bottom: 30px;">Licenciamento Quant</h2>
+            <div class="pricing-grid">
+                <div class="plan-card">
+                    <h3>Solo Alpha</h3>
+                    <p style="margin: 15px 0; font-weight: 800;">FREE</p>
+                    <ul class="plan-list">
+                        <li>[+] Monitoramento Real-Time</li>
+                        <li>[-] Pesquisa de Tickers Bloqueada</li>
+                        <li>[-] Filtros Avançados Desativados</li>
+                    </ul>
+                    <button class="btn-main" onclick="initSystem('SOLO')">Ativar</button>
+                </div>
+                <div class="plan-card" style="border-color: var(--primary);">
+                    <h3>Pro Elite</h3>
+                    <p style="margin: 15px 0; font-weight: 800;">LIBERADO</p>
+                    <ul class="plan-list">
+                        <li>[+] Ilimitados Tickers</li>
+                        <li>[+] Scanner de Fluxo Inst.</li>
+                        <li>[+] Suporte Prioritário</li>
+                    </ul>
+                    <button class="btn-main" onclick="initSystem('PRO')">Ativar</button>
+                </div>
+                <div class="plan-card">
+                    <div class="plan-badge">MAX</div>
+                    <h3>Institutional Black</h3>
+                    <p style="margin: 15px 0; font-weight: 800;">LIBERADO</p>
+                    <ul class="plan-list">
+                        <li>[+] Detector de Baleias IA</li>
+                        <li>[+] Sinais de Liquidez HFT</li>
+                        <li>[+] API de Baixa Latência</li>
+                    </ul>
+                    <button class="btn-main" style="background:var(--gold); color:black;" onclick="initSystem('INST')">Ativar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-terminal" style="display: none;">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 id="display-pair">BTC/USDT</h3>
+                    <button class="btn-outline" style="color:var(--danger); border-color:var(--danger);" onclick="clearAll()">LIMPAR</button>
+                </div>
+                <div style="height: 300px;"><canvas id="chartCanvas"></canvas></div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="input-search" class="search-input" placeholder="Ticker (Ex: ETH, SOL, XRP)">
+                <button class="btn-outline" id="btn-add-asset" style="border-color:var(--primary);" onclick="addAsset()">ADICIONAR</button>
+            </div>
+            <div class="asset-grid" id="grid-assets"></div>
+            <div class="card">
+                <h4 style="font-size: 0.7rem; margin-bottom: 10px; opacity: 0.5;">LOG DE OPERAÇÕES REAL-TIME</h4>
+                <div class="log-box" id="terminal-logs"></div>
+            </div>
+        </div>
+
+        <div id="section-academy" style="display: none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>Suporte de Decisão IA</h2>
+                <button class="btn-outline" onclick="showTerminal()">VOLTAR AO TERMINAL</button>
+            </div>
+            <div class="academy-grid">
+                <div>
+                    <div class="card">
+                        <h3 style="color: var(--primary); margin-bottom: 15px;">Gestão de Risco</h3>
+                        <p style="font-size: 0.8rem; margin-bottom: 15px; opacity: 0.7;">Análise para: <strong id="target-name">BTC</strong></p>
+                        <input type="number" id="input-capital" class="search-input" style="width: 100%; margin-bottom: 15px;" placeholder="Seu Capital em $">
+                        <button class="btn-main" onclick="runExpertAnalysis()">GERAR PLANO DE ATAQUE</button>
+                    </div>
+                    <div id="ai-response" class="card" style="display:none; border-color: var(--primary);"></div>
+                </div>
+                <div>
+                    <div class="strategy-box">
+                        <h3 style="margin-bottom: 10px;">>> ESTRATÉGIA BESI</h3>
+                        <div class="info-pill"><strong>Divisão:</strong> Compre em 4 partes de 25%.</div>
+                        <div class="info-pill"><strong>Proteção:</strong> Stop sugerido em -5%.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="disclaimer">SISTEMA QUANTITATIVO BESI IA. DADOS REAIS VIA BINANCE. © 2026</p>
+    </main>
+
+    <script>
+        let coins = [{id:'btcusdt', name:'BTC'}, {id:'ethusdt', name:'ETH'}];
+        let activeId = 'btcusdt', chart, sockets = {}, currentTier = '';
+
+        function initSystem(tier) {
+            currentTier = tier;
+            document.getElementById('section-plans').style.display = 'none';
+            document.getElementById('section-terminal').style.display = 'block';
+            document.getElementById('btn-back-plans').style.display = 'block';
+
+            const academyBtn = document.getElementById('nav-academy');
+            const searchInput = document.getElementById('input-search');
+            const addBtn = document.getElementById('btn-add-asset');
+
+            if(tier === 'SOLO') {
+                academyBtn.style.display = 'none';
+                searchInput.disabled = true;
+                searchInput.placeholder = "PESQUISA BLOQUEADA";
+                addBtn.style.display = 'none';
+            } else {
+                academyBtn.style.display = 'block';
+                searchInput.disabled = false;
+                searchInput.placeholder = "Ticker (Ex: ETH, SOL)";
+                addBtn.style.display = 'block';
+            }
+
+            if(!chart) setupChart();
+            renderAssets();
+            addLog("Terminal conectado: " + tier);
+        }
+
+        function setupChart() {
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#6366f1', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0 }]},
+                options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { display: false }, y: { position: 'right' } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderAssets() {
+            const grid = document.getElementById('grid-assets');
+            grid.innerHTML = '';
+            coins.forEach(c => {
+                const card = document.createElement('div');
+                card.className = `asset-card ${activeId === c.id ? 'active' : ''}`;
+                card.onclick = () => selectCoin(c.id);
+                card.innerHTML = `
+                    <div class="remove-btn" onclick="removeAsset(event, '${c.id}')" style="${currentTier === 'SOLO' ? 'display:none' : ''}">X</div>
+                    <div style="font-size:0.6rem; opacity:0.5; font-weight:800;">${c.name}</div>
+                    <div id="price-${c.id}" style="font-family:'JetBrains Mono'; font-weight:800;">$ 0.00</div>
+                    <div id="pct-${c.id}" style="font-size: 0.7rem; font-weight: 800;">0.00%</div>
+                `;
+                grid.appendChild(card);
+                connectWS(c.id);
+            });
+        }
+
+        function connectWS(id) {
+            if(sockets[id]) return;
+            const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${id}@ticker`);
+            sockets[id] = ws;
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                const price = parseFloat(data.c), pct = parseFloat(data.P);
+                const pEl = document.getElementById(`price-${id}`), pctEl = document.getElementById(`pct-${id}`);
+                if(pEl) pEl.innerText = price.toLocaleString('en-US', {style:'currency', currency:'USD'});
+                if(pctEl) {
+                    pctEl.innerText = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+                    pctEl.style.color = pct >= 0 ? 'var(--success)' : 'var(--danger)';
+                }
+                if(id === activeId && chart) {
+                    chart.data.labels.push(""); chart.data.datasets[0].data.push(price);
+                    if(chart.data.labels.length > 20) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
+                    chart.update('none');
+                }
+            };
+        }
+
+        function selectCoin(id) {
+            activeId = id;
+            document.getElementById('display-pair').innerText = id.toUpperCase();
+            document.getElementById('target-name').innerText = id.replace('usdt','').toUpperCase();
+            renderAssets();
+            if(chart) { chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); }
+        }
+
+        async function addAsset() {
+            const val = document.getElementById('input-search').value.toLowerCase().trim();
+            if(!val) return;
+            const fullId = val.endsWith('usdt') ? val : val + 'usdt';
+            try {
+                const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${fullId.toUpperCase()}`);
+                if(!res.ok) throw new Error();
+                if(!coins.find(c => c.id === fullId)) {
+                    coins.push({id: fullId, name: val.toUpperCase()});
+                    renderAssets();
+                    addLog("Ativo adicionado: " + val.toUpperCase());
+                }
+            } catch(e) { alert("Ticker não encontrado."); }
+            document.getElementById('input-search').value = '';
+        }
+
+        function removeAsset(e, id) {
+            e.stopPropagation();
+            if(sockets[id]) { sockets[id].close(); delete sockets[id]; }
+            coins = coins.filter(c => c.id !== id);
+            renderAssets();
+        }
+
+        function addLog(msg) {
+            const box = document.getElementById('terminal-logs');
+            const entry = document.createElement('div');
+            entry.innerHTML = `<span style="color:var(--primary)">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+            box.prepend(entry);
+        }
+
+        function backToPlans() {
+            document.getElementById('section-terminal').style.display = 'none';
+            document.getElementById('section-academy').style.display = 'none';
+            document.getElementById('nav-academy').style.display = 'none'; // CORREÇÃO AQUI
+            document.getElementById('section-plans').style.display = 'block';
+            document.getElementById('btn-back-plans').style.display = 'none';
+        }
+
+        function showAcademy() {
+            document.getElementById('section-terminal').style.display = 'none';
+            document.getElementById('section-academy').style.display = 'block';
+        }
+
+        function showTerminal() {
+            document.getElementById('section-academy').style.display = 'none';
+            document.getElementById('section-terminal').style.display = 'block';
+        }
+
+        function runExpertAnalysis() {
+            const cap = document.getElementById('input-capital').value;
+            if(!cap) return;
+            const res = document.getElementById('ai-response');
+            res.style.display = 'block';
+            res.innerHTML = `
+                <h4 style="margin-bottom:10px;">RELATÓRIO QUANT</h4>
+                <div class="info-pill">Aporte Seguro: $${(cap * 0.15).toFixed(2)} (15%)</div>
+                <div class="info-pill">Risco Máximo: $${(cap * 0.05).toFixed(2)} (5%)</div>
+            `;
+            addLog("Análise Expert Gerada.");
+        }
+
+        function clearAll() {
+            Object.values(sockets).forEach(s => s.close());
+            sockets = {}; coins = []; renderAssets();
+            addLog("Terminal Resetado.");
+        }
+    </script>
+</body>
+</html>
